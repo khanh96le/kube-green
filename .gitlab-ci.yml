@@ -7,7 +7,7 @@ before_script:
 dockerize:
   stage: build
   script:
-    - IMAGE_NAME="kube-green"
+    - IMAGE_NAME="kube-green/worker"
     # Authenticate with gcr.io
     - docker login -u _json_key -p "$(echo $GCR_SA_JSON | base64 -d)" https://gcr.io &>/dev/null
     - docker login -u _json_key -p "$(echo $GCR_SA_JSON | base64 -d)" https://asia.gcr.io &>/dev/null
