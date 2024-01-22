@@ -72,7 +72,7 @@ func (d *daemonsets) fetch(ctx context.Context, namespace string) error {
 	}
 	log.V(1).Info("daemonsets in namespace", "number of daemonsets", len(daemonsetList))
 	afterExcludedList := d.filterExcludedDaemonset(daemonsetList)
-	includedList := d.filterIncludedDeployment(afterExcludedList)
+	includedList := d.filterIncludedDaemonset(afterExcludedList)
 	d.data = includedList
 	return nil
 }
@@ -112,7 +112,7 @@ func shouldExcludeDaemonset(daemonset appsv1.DaemonSet, sleepInfo *kubegreenv1al
 	return false
 }
 
-func (d daemonsets) filterIncludedDeployment(daemonsetList []appsv1.DaemonSet) []appsv1.DaemonSet {
+func (d daemonsets) filterIncludedDaemonset(daemonsetList []appsv1.DaemonSet) []appsv1.DaemonSet {
 	filteredList := []appsv1.DaemonSet{}
 	for _, daemonset := range daemonsetList {
 		if shouldIncludeDaemonset(daemonset, d.SleepInfo) {
