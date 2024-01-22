@@ -71,7 +71,9 @@ func (d *daemonsets) fetch(ctx context.Context, namespace string) error {
 		return err
 	}
 	log.V(1).Info("daemonsets in namespace", "number of daemonsets", len(daemonsetList))
-	d.data = d.filterExcludedDaemonset(daemonsetList)
+	afterExcludedList := d.filterExcludedDaemonset(daemonsetList)
+	includedList := d.filterIncludedDeployment(afterExcludedList)
+	d.data = includedList
 	return nil
 }
 
@@ -103,6 +105,33 @@ func shouldExcludeDaemonset(daemonset appsv1.DaemonSet, sleepInfo *kubegreenv1al
 			return true
 		}
 		if labelMatch(daemonset.Labels, exclusion.MatchLabels) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (d daemonsets) filterIncludedDeployment(daemonsetList []appsv1.DaemonSet) []appsv1.DaemonSet {
+	filteredList := []appsv1.DaemonSet{}
+	for _, daemonset := range daemonsetList {
+		if shouldIncludeDaemonset(daemonset, d.SleepInfo) {
+			filteredList = append(filteredList, daemonset)
+		}
+	}
+	return filteredList
+}
+
+func shouldIncludeDaemonset(daemonset appsv1.DaemonSet, sleepInfo *kubegreenv1alpha1.SleepInfo) bool {
+	if len(sleepInfo.GetInludeRef()) == 0 {
+		return true
+	}
+
+	for _, inclusion := range sleepInfo.GetInludeRef() {
+		if inclusion.Kind == "Daemonset" && inclusion.APIVersion == "apps/v1" && inclusion.Name != "" && daemonset.Name == inclusion.Name {
+			return true
+		}
+		if labelMatch(daemonset.Labels, inclusion.MatchLabels) {
 			return true
 		}
 	}
