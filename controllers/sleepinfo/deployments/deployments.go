@@ -91,7 +91,9 @@ func (d *deployments) fetch(ctx context.Context, namespace string) error {
 		return err
 	}
 	log.V(1).Info("deployments in namespace", "number of deployment", len(deploymentList))
-	d.data = d.filterExcludedDeployment(deploymentList)
+	afterExcludedList := d.filterExcludedDeployment(deploymentList)
+	includedList := d.filterIncludedDeployment(afterExcludedList)
+	d.data = includedList
 	return nil
 }
 
@@ -123,6 +125,33 @@ func shouldExcludeDeployment(deployment appsv1.Deployment, sleepInfo *kubegreenv
 			return true
 		}
 		if labelMatch(deployment.Labels, exclusion.MatchLabels) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (d deployments) filterIncludedDeployment(deploymentList []appsv1.Deployment) []appsv1.Deployment {
+	filteredList := []appsv1.Deployment{}
+	for _, deployment := range deploymentList {
+		if shouldIncludeDeployment(deployment, d.SleepInfo) {
+			filteredList = append(filteredList, deployment)
+		}
+	}
+	return filteredList
+}
+
+func shouldIncludeDeployment(deployment appsv1.Deployment, sleepInfo *kubegreenv1alpha1.SleepInfo) bool {
+	if len(sleepInfo.GetInludeRef()) == 0 {
+		return true
+	}
+
+	for _, inclusion := range sleepInfo.GetInludeRef() {
+		if inclusion.Kind == "Deployment" && inclusion.APIVersion == "apps/v1" && inclusion.Name != "" && deployment.Name == inclusion.Name {
+			return true
+		}
+		if labelMatch(deployment.Labels, inclusion.MatchLabels) {
 			return true
 		}
 	}
