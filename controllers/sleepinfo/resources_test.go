@@ -3,6 +3,7 @@ package sleepinfo
 import (
 	"context"
 	"fmt"
+	"github.com/kube-green/kube-green/controllers/sleepinfo/daemonsets"
 	"strings"
 	"testing"
 
@@ -33,6 +34,11 @@ func TestNewResources(t *testing.T) {
 		Name:      "deploy",
 		Replicas:  &replica1,
 		Namespace: namespace,
+	})
+	daemonsets := daemonsets.GetMock(daemonsets.MockSpec{
+		Name:            "daemonset",
+		Namespace:       namespace,
+		PodNodeSelector: map[string]string{"node-selector": "true"},
 	})
 
 	t.Run("errors if client is not valid", func(t *testing.T) {
@@ -68,6 +74,17 @@ func TestNewResources(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, res.deployments.HasResource())
 		require.True(t, res.cronjobs.HasResource())
+	})
+
+	t.Run("retrieve daemonsets data", func(t *testing.T) {
+		resClient := resource.ResourceClient{
+			Client:    getFakeClient().WithRuntimeObjects(&daemonsets).Build(),
+			Log:       zap.New(zap.UseDevMode(true)),
+			SleepInfo: &v1alpha1.SleepInfo{},
+		}
+		res, err := NewResources(context.Background(), resClient, namespace, SleepInfoData{})
+		require.NoError(t, err)
+		require.True(t, res.daemonsets.HasResource())
 	})
 
 	t.Run("throws if fetch deployments fails", func(t *testing.T) {
