@@ -26,6 +26,15 @@ type ExcludeRef struct {
 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 }
 
+type IncludeRef struct {
+	// Kind of the kubernetes resources of the specific version.
+	// Supported kind are "Deployment" and "CronJob".
+	Kind string `json:"kind,omitempty"`
+	// Name which identify the kubernetes resource.
+	// +optional
+	Name string `json:"name,omitempty"`
+}
+
 // SleepInfoSpec defines the desired state of SleepInfo
 type SleepInfoSpec struct {
 	// Weekdays are in cron notation.
@@ -57,6 +66,10 @@ type SleepInfoSpec struct {
 	// +optional
 	//+operator-sdk:csv:customresourcedefinitions:type=spec
 	ExcludeRef []ExcludeRef `json:"excludeRef,omitempty"`
+	// IncludeRef define the resource to include from the sleep.
+	// +optional
+	//+operator-sdk:csv:customresourcedefinitions:type=spec
+	IncludeRef []IncludeRef `json:"includeRef,omitempty"`
 	// If SuspendCronjobs is set to true, on sleep the cronjobs of the namespace will be suspended.
 	// +optional
 	//+operator-sdk:csv:customresourcedefinitions:type=spec
@@ -108,6 +121,10 @@ func (s SleepInfo) GetWakeUpSchedule() (string, error) {
 
 func (s SleepInfo) GetExcludeRef() []ExcludeRef {
 	return s.Spec.ExcludeRef
+}
+
+func (s SleepInfo) GetInludeRef() []IncludeRef {
+	return s.Spec.IncludeRef
 }
 
 func (s SleepInfo) getScheduleFromWeekdayAndTime(hourAndMinute string) (string, error) {

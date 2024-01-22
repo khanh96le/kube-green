@@ -58,6 +58,19 @@ spec:
                       type: string
                   type: object
                 type: array
+              includeRef:
+                description: IncludeRef define the resource to include from the sleep.
+                items:
+                  properties:
+                    kind:
+                      description: Kind of the kubernetes resources of the specific
+                        version. Supported kind are "Deployment" and "CronJob".
+                      type: string
+                    name:
+                      description: Name which identify the kubernetes resource.
+                      type: string
+                  type: object
+                type: array
               sleepAt:
                 description: "Hours:Minutes \n Accept cron schedule for both hour
                   and minute. For example, *:*/2 is set to configure a run every even
