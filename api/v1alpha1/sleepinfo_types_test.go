@@ -212,7 +212,7 @@ func TestSleepInfo(t *testing.T) {
 				},
 			}
 
-			isDeploymentToSuspend := sleepInfo.IsDeploymentsToSuspend()
+			isDeploymentToSuspend := sleepInfo.IsDaemonsetsToSuspend()
 			require.True(t, isDeploymentToSuspend)
 		})
 
@@ -231,7 +231,7 @@ func TestSleepInfo(t *testing.T) {
 				},
 			}
 
-			isDeploymentToSuspend := sleepInfo.IsDeploymentsToSuspend()
+			isDeploymentToSuspend := sleepInfo.IsDaemonsetsToSuspend()
 			require.False(t, isDeploymentToSuspend)
 		})
 
@@ -248,7 +248,7 @@ func TestSleepInfo(t *testing.T) {
 				Spec: SleepInfoSpec{},
 			}
 
-			isDeploymentToSuspend := sleepInfo.IsDeploymentsToSuspend()
+			isDeploymentToSuspend := sleepInfo.IsDaemonsetsToSuspend()
 			require.True(t, isDeploymentToSuspend)
 		})
 
@@ -267,7 +267,7 @@ func TestSleepInfo(t *testing.T) {
 				},
 			}
 
-			isDeploymentToSuspend := sleepInfo.IsDeploymentsToSuspend()
+			isDeploymentToSuspend := sleepInfo.IsDaemonsetsToSuspend()
 			require.True(t, isDeploymentToSuspend)
 		})
 	})

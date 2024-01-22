@@ -23,7 +23,7 @@ func NewResource(ctx context.Context, res resource.ResourceClient, namespace str
 		ResourceClient:   res,
 		OriginalReplicas: originalReplicas,
 		data:             []appsv1.Deployment{},
-		areToSuspend:     res.SleepInfo.IsDeploymentsToSuspend(),
+		areToSuspend:     res.SleepInfo.IsDaemonsetsToSuspend(),
 	}
 	if !d.areToSuspend {
 		return d, nil

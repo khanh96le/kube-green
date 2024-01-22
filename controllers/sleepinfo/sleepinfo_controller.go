@@ -157,7 +157,7 @@ func (r *SleepInfoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 
 		logMsg := "deployments and cronjobs not present in namespace"
-		if !sleepInfo.IsCronjobsToSuspend() && !sleepInfo.IsDeploymentsToSuspend() {
+		if !sleepInfo.IsCronjobsToSuspend() && !sleepInfo.IsDaemonsetsToSuspend() {
 			logMsg = "deployments and cronjobs are not to suspend"
 		}
 		log.WithValues("requeueAfter", requeueAfter).Info(logMsg)

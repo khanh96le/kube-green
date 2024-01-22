@@ -23,7 +23,7 @@ func NewResource(ctx context.Context, res resource.ResourceClient, namespace str
 		ResourceClient:   res,
 		OriginalReplicas: originalReplicas,
 		data:             []appsv1.DaemonSet{},
-		areToSuspend:     res.SleepInfo.IsDeploymentsToSuspend(),
+		areToSuspend:     res.SleepInfo.IsDaemonsetsToSuspend(),
 	}
 	if !d.areToSuspend {
 		return d, nil
@@ -60,40 +60,18 @@ func (d daemonsets) Sleep(ctx context.Context) error {
 }
 
 func (d daemonsets) WakeUp(ctx context.Context) error {
-	//for _, deployment := range d.data {
-	//	deployment := deployment
-
-	//deployLogger := d.Log.WithValues("deployment", deployment.Name, "namespace", deployment.Namespace)
-	//if *deployment.Spec.Replicas != 0 {
-	//	 deployLogger.Info("replicas not 0 during wake up")
-	//	 continue
-	//}
-	//
-	//replica, ok := d.OriginalReplicas[deployment.Name]
-	//if !ok {
-	//	 deployLogger.Info("original deploy info not correctly set")
-	//	 continue
-	//}
-	//
-	//newDeploy := deployment.DeepCopy()
-	//*newDeploy.Spec.Replicas = replica
-	//
-	//if err := d.Patch(ctx, &deployment, newDeploy); err != nil {
-	//	 return err
-	//}
-	//}
 	return nil
 }
 
 func (d *daemonsets) fetch(ctx context.Context, namespace string) error {
 	log := d.Log.WithValues("namespace", namespace)
 
-	deploymentList, err := d.getListByNamespace(ctx, namespace)
+	daemonsetList, err := d.getListByNamespace(ctx, namespace)
 	if err != nil {
 		return err
 	}
-	log.V(1).Info("daemonsets in namespace", "number of deployment", len(deploymentList))
-	d.data = d.filterExcludedDeployment(deploymentList)
+	log.V(1).Info("daemonsets in namespace", "number of daemonsets", len(daemonsetList))
+	d.data = d.filterExcludedDaemonset(daemonsetList)
 	return nil
 }
 
@@ -102,29 +80,29 @@ func (d daemonsets) getListByNamespace(ctx context.Context, namespace string) ([
 		Namespace: namespace,
 		Limit:     500,
 	}
-	deployments := appsv1.DaemonSetList{}
-	if err := d.Client.List(ctx, &deployments, listOptions); err != nil {
-		return deployments.Items, client.IgnoreNotFound(err)
+	daemonsets := appsv1.DaemonSetList{}
+	if err := d.Client.List(ctx, &daemonsets, listOptions); err != nil {
+		return daemonsets.Items, client.IgnoreNotFound(err)
 	}
-	return deployments.Items, nil
+	return daemonsets.Items, nil
 }
 
-func (d daemonsets) filterExcludedDeployment(deploymentList []appsv1.DaemonSet) []appsv1.DaemonSet {
+func (d daemonsets) filterExcludedDaemonset(daemonsetList []appsv1.DaemonSet) []appsv1.DaemonSet {
 	filteredList := []appsv1.DaemonSet{}
-	for _, deployment := range deploymentList {
-		if !shouldExcludeDeployment(deployment, d.SleepInfo) {
-			filteredList = append(filteredList, deployment)
+	for _, daemonset := range daemonsetList {
+		if !shouldExcludeDaemonset(daemonset, d.SleepInfo) {
+			filteredList = append(filteredList, daemonset)
 		}
 	}
 	return filteredList
 }
 
-func shouldExcludeDeployment(deployment appsv1.DaemonSet, sleepInfo *kubegreenv1alpha1.SleepInfo) bool {
+func shouldExcludeDaemonset(daemonset appsv1.DaemonSet, sleepInfo *kubegreenv1alpha1.SleepInfo) bool {
 	for _, exclusion := range sleepInfo.GetExcludeRef() {
-		if exclusion.Kind == "DaemonSet" && exclusion.APIVersion == "apps/v1" && exclusion.Name != "" && deployment.Name == exclusion.Name {
+		if exclusion.Kind == "DaemonSet" && exclusion.APIVersion == "apps/v1" && exclusion.Name != "" && daemonset.Name == exclusion.Name {
 			return true
 		}
-		if labelMatch(deployment.Labels, exclusion.MatchLabels) {
+		if labelMatch(daemonset.Labels, exclusion.MatchLabels) {
 			return true
 		}
 	}
@@ -158,23 +136,6 @@ func (d daemonsets) GetOriginalInfoToSave() ([]byte, error) {
 	if !d.areToSuspend {
 		return nil, nil
 	}
-	//originalDeploymentsReplicas := []OriginalReplicas{}
-	//for _, deployment := range d.data {
-	//	originalReplicas := *deployment.Spec.Replicas
-	//	if replica, ok := d.OriginalReplicas[deployment.Name]; ok {
-	//		if ok && replica != 0 {
-	//			originalReplicas = replica
-	//		}
-	//	}
-	//	if originalReplicas == 0 {
-	//		continue
-	//	}
-	//	originalDeploymentsReplicas = append(originalDeploymentsReplicas, OriginalReplicas{
-	//		Name:     deployment.Name,
-	//		Replicas: originalReplicas,
-	//	})
-	//}
-	//return json.Marshal(originalDeploymentsReplicas)
 	return nil, nil
 }
 
@@ -182,15 +143,15 @@ func GetOriginalInfoToRestore(data []byte) (map[string]int32, error) {
 	if data == nil {
 		return map[string]int32{}, nil
 	}
-	originalDeploymentsReplicas := []OriginalReplicas{}
-	originalDeploymentsReplicasData := map[string]int32{}
-	if err := json.Unmarshal(data, &originalDeploymentsReplicas); err != nil {
+	originalDaemonsetsReplicas := []OriginalReplicas{}
+	originalDaemonsetsReplicasData := map[string]int32{}
+	if err := json.Unmarshal(data, &originalDaemonsetsReplicas); err != nil {
 		return nil, err
 	}
-	for _, replicaInfo := range originalDeploymentsReplicas {
+	for _, replicaInfo := range originalDaemonsetsReplicas {
 		if replicaInfo.Name != "" {
-			originalDeploymentsReplicasData[replicaInfo.Name] = replicaInfo.Replicas
+			originalDaemonsetsReplicasData[replicaInfo.Name] = replicaInfo.Replicas
 		}
 	}
-	return originalDeploymentsReplicasData, nil
+	return originalDaemonsetsReplicasData, nil
 }

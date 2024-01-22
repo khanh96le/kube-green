@@ -851,7 +851,7 @@ func assertCorrectSleepOperation(t *testing.T, ctx context.Context, cfg *envconf
 
 	t.Run("replicas are set to 0 to all deployments set to sleep", func(t *testing.T) {
 		deployments := getDeploymentList(t, ctx, cfg)
-		if assert.originalResources.sleepInfo.IsDeploymentsToSuspend() {
+		if assert.originalResources.sleepInfo.IsDaemonsetsToSuspend() {
 			if len(assert.excludedDeployment) == 0 {
 				assertAllReplicasSetToZero(t, deployments)
 			} else {
@@ -908,7 +908,7 @@ func assertCorrectSleepOperation(t *testing.T, ctx context.Context, cfg *envconf
 		require.NoError(t, err)
 		secretData := secret.Data
 
-		if !assert.originalResources.sleepInfo.IsCronjobsToSuspend() && !assert.originalResources.sleepInfo.IsDeploymentsToSuspend() {
+		if !assert.originalResources.sleepInfo.IsCronjobsToSuspend() && !assert.originalResources.sleepInfo.IsDaemonsetsToSuspend() {
 			require.Equal(t, map[string][]byte{
 				lastScheduleKey: []byte(parseTime(t, assert.expectedScheduleTime).Truncate(time.Second).Format(time.RFC3339)),
 			}, secretData)
@@ -920,7 +920,7 @@ func assertCorrectSleepOperation(t *testing.T, ctx context.Context, cfg *envconf
 			lastOperationKey: []byte(sleepOperation),
 		}
 
-		if assert.originalResources.sleepInfo.IsDeploymentsToSuspend() {
+		if assert.originalResources.sleepInfo.IsDaemonsetsToSuspend() {
 			type ExpectedReplicas struct {
 				Name     string `json:"name"`
 				Replicas int32  `json:"replicas"`
@@ -970,7 +970,7 @@ func assertCorrectSleepOperation(t *testing.T, ctx context.Context, cfg *envconf
 
 		operationType := sleepOperation
 
-		if !sleepInfo.IsCronjobsToSuspend() && !sleepInfo.IsDeploymentsToSuspend() {
+		if !sleepInfo.IsCronjobsToSuspend() && !sleepInfo.IsDaemonsetsToSuspend() {
 			operationType = ""
 		}
 

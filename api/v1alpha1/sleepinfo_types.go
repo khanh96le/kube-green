@@ -132,7 +132,7 @@ func (s SleepInfo) IsCronjobsToSuspend() bool {
 	return s.Spec.SuspendCronjobs
 }
 
-func (s SleepInfo) IsDeploymentsToSuspend() bool {
+func (s SleepInfo) IsDaemonsetsToSuspend() bool {
 	if s.Spec.SuspendDeployments == nil {
 		return true
 	}
