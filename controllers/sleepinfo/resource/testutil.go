@@ -3,6 +3,7 @@ package resource
 import "context"
 
 type Mock struct {
+	MockType                string
 	HasResourceResponseMock bool
 	MockSleep               func(context.Context) error
 	MockWakeUp              func(context.Context) error

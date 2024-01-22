@@ -167,49 +167,72 @@ func TestResourcesSleep(t *testing.T) {
 	t.Run("correctly sleep all resources", func(t *testing.T) {
 		numberOfCalledDeploymentSleep := 0
 		numberOfCalledCronJobSleep := 0
+		numberOfCalledDaemonsetSleep := 0
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockSleep: func(ctx context.Context) error {
 				numberOfCalledCronJobSleep++
 				return nil
 			},
 		}
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockSleep: func(ctx context.Context) error {
 				numberOfCalledDeploymentSleep++
 				return nil
 			},
 		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+			MockSleep: func(ctx context.Context) error {
+				numberOfCalledDaemonsetSleep++
+				return nil
+			},
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		err := r.sleep(context.Background())
 		require.NoError(t, err)
 
 		require.Equal(t, 1, numberOfCalledDeploymentSleep, "calls deployments sleep")
 		require.Equal(t, 1, numberOfCalledCronJobSleep, "calls cron job sleep")
+		require.Equal(t, 1, numberOfCalledDaemonsetSleep, "calls daemonsets sleep")
 	})
 
 	t.Run("throws if deployment sleep fails", func(t *testing.T) {
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockSleep: func(ctx context.Context) error {
 				return fmt.Errorf("some error")
 			},
 		}
-		cronJobMock := resource.Mock{}
+		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
+		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		err := r.sleep(context.Background())
 		require.EqualError(t, err, "some error")
 	})
 
 	t.Run("throws if cron job sleep fails", func(t *testing.T) {
-		deploymentMock := resource.Mock{}
+		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
+		}
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockSleep: func(ctx context.Context) error {
 				return fmt.Errorf("some error")
 			},
 		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		err := r.sleep(context.Background())
 		require.EqualError(t, err, "some error")
 	})
@@ -220,19 +243,24 @@ func TestResourcesWakeUp(t *testing.T) {
 		numberOfCalledDeploymentWakeUp := 0
 		numberOfCalledCronJobWakeUp := 0
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockWakeUp: func(ctx context.Context) error {
 				numberOfCalledCronJobWakeUp++
 				return nil
 			},
 		}
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockWakeUp: func(ctx context.Context) error {
 				numberOfCalledDeploymentWakeUp++
 				return nil
 			},
 		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		err := r.wakeUp(context.Background())
 		require.NoError(t, err)
 
@@ -242,20 +270,27 @@ func TestResourcesWakeUp(t *testing.T) {
 
 	t.Run("throws if deployment sleep fails", func(t *testing.T) {
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockWakeUp: func(ctx context.Context) error {
 				return fmt.Errorf("some error")
 			},
 		}
-		cronJobMock := resource.Mock{}
+		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
+		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		err := r.wakeUp(context.Background())
 		require.EqualError(t, err, "some error")
 	})
 
 	t.Run("throws if cron job sleep fails", func(t *testing.T) {
-		deploymentMock := resource.Mock{}
+		deploymentMock := resource.Mock{MockType: DeploymentResourceName}
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockWakeUp: func(ctx context.Context) error {
 				return fmt.Errorf("some error")
 			},
@@ -272,19 +307,24 @@ func TestGetOriginalResourceInfoToSave(t *testing.T) {
 		numberOfCalledDeploymentInfoToSave := 0
 		numberOfCalledCronJobInfoToSave := 0
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockOriginalInfoToSave: func() ([]byte, error) {
 				numberOfCalledDeploymentInfoToSave++
 				return nil, nil
 			},
 		}
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockOriginalInfoToSave: func() ([]byte, error) {
 				numberOfCalledCronJobInfoToSave++
 				return []byte("[]"), nil
 			},
 		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		data, err := r.getOriginalResourceInfoToSave()
 		require.NoError(t, err)
 		require.Equal(t, map[string][]byte{
@@ -299,19 +339,24 @@ func TestGetOriginalResourceInfoToSave(t *testing.T) {
 		numberOfCalledDeploymentInfoToSave := 0
 		numberOfCalledCronJobInfoToSave := 0
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockOriginalInfoToSave: func() ([]byte, error) {
 				numberOfCalledCronJobInfoToSave++
 				return nil, nil
 			},
 		}
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockOriginalInfoToSave: func() ([]byte, error) {
 				numberOfCalledDeploymentInfoToSave++
 				return []byte("[]"), nil
 			},
 		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		data, err := r.getOriginalResourceInfoToSave()
 		require.NoError(t, err)
 		require.Equal(t, map[string][]byte{
@@ -324,26 +369,38 @@ func TestGetOriginalResourceInfoToSave(t *testing.T) {
 
 	t.Run("throws if deployment sleep fails", func(t *testing.T) {
 		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
 			MockOriginalInfoToSave: func() ([]byte, error) {
 				return nil, fmt.Errorf("some error")
 			},
 		}
-		cronJobMock := resource.Mock{}
+		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
+		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		_, err := r.getOriginalResourceInfoToSave()
 		require.EqualError(t, err, "some error")
 	})
 
 	t.Run("throws if cron job sleep fails", func(t *testing.T) {
-		deploymentMock := resource.Mock{}
+		deploymentMock := resource.Mock{
+			MockType: DeploymentResourceName,
+		}
 		cronJobMock := resource.Mock{
+			MockType: CronjobResourceName,
 			MockOriginalInfoToSave: func() ([]byte, error) {
 				return nil, fmt.Errorf("some error")
 			},
 		}
+		daemonsetMock := resource.Mock{
+			MockType: DaemonsetResourceName,
+		}
 
-		r := newResourcesMock(t, deploymentMock, cronJobMock)
+		r := newResourcesMock(t, deploymentMock, cronJobMock, daemonsetMock)
 		_, err := r.getOriginalResourceInfoToSave()
 		require.EqualError(t, err, "some error")
 	})
@@ -397,12 +454,20 @@ func TestSetOriginalResourceInfoToRestoreInSleepInfo(t *testing.T) {
 	})
 }
 
-func newResourcesMock(t *testing.T, deploymentsMock resource.Mock, cronjobsMock resource.Mock) Resources {
+func newResourcesMock(t *testing.T, resourcesMock ...resource.Mock) Resources {
 	t.Helper()
-	return Resources{
-		deployments: resource.GetResourceMock(deploymentsMock),
-		cronjobs:    resource.GetResourceMock(cronjobsMock),
+	var resources = Resources{}
+	for _, resourceMock := range resourcesMock {
+		switch resourceMock.MockType {
+		case CronjobResourceName:
+			resources.cronjobs = resource.GetResourceMock(resourceMock)
+		case DaemonsetResourceName:
+			resources.daemonsets = resource.GetResourceMock(resourceMock)
+		default:
+			resources.deployments = resource.GetResourceMock(resourceMock)
+		}
 	}
+	return resources
 }
 
 func getFakeClient() *fake.ClientBuilder {

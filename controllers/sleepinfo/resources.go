@@ -2,11 +2,17 @@ package sleepinfo
 
 import (
 	"context"
-	"github.com/kube-green/kube-green/controllers/sleepinfo/daemonsets"
 
 	"github.com/kube-green/kube-green/controllers/sleepinfo/cronjobs"
+	"github.com/kube-green/kube-green/controllers/sleepinfo/daemonsets"
 	"github.com/kube-green/kube-green/controllers/sleepinfo/deployments"
 	"github.com/kube-green/kube-green/controllers/sleepinfo/resource"
+)
+
+const (
+	DeploymentResourceName = "deployments"
+	CronjobResourceName    = "cronjobs"
+	DaemonsetResourceName  = "daemonsets"
 )
 
 type Resources struct {
