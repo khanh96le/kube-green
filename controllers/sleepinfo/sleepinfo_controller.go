@@ -26,11 +26,12 @@ import (
 )
 
 const (
-	lastScheduleKey               = "scheduled-at"
-	lastOperationKey              = "operation-type"
-	replicasBeforeSleepKey        = "deployment-replicas"
-	originalCronjobStatusKey      = "cronjobs-info"
-	replicasBeforeSleepAnnotation = "sleepinfo.kube-green.com/replicas-before-sleep"
+	lastScheduleKey                  = "scheduled-at"
+	lastOperationKey                 = "operation-type"
+	replicasBeforeSleepKey           = "deployment-replicas"
+	originalCronjobStatusKey         = "cronjobs-info"
+	replicasBeforeSleepAnnotation    = "sleepinfo.kube-green.com/replicas-before-sleep"
+	daemonsetNodeSelectorBeforeSleep = "deamonset-node-selector"
 
 	sleepOperation  = "SLEEP"
 	wakeUpOperation = "WAKE_UP"

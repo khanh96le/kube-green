@@ -2,6 +2,7 @@ package sleepinfo
 
 import (
 	"context"
+	"github.com/kube-green/kube-green/controllers/sleepinfo/daemonsets"
 
 	"github.com/kube-green/kube-green/controllers/sleepinfo/cronjobs"
 	"github.com/kube-green/kube-green/controllers/sleepinfo/deployments"
@@ -11,6 +12,7 @@ import (
 type Resources struct {
 	deployments resource.Resource
 	cronjobs    resource.Resource
+	daemonsets  resource.Resource
 }
 
 func NewResources(ctx context.Context, resourceClient resource.ResourceClient, namespace string, sleepInfoData SleepInfoData) (Resources, error) {
@@ -27,19 +29,28 @@ func NewResources(ctx context.Context, resourceClient resource.ResourceClient, n
 		resourceClient.Log.Error(err, "fails to init cronjobs")
 		return Resources{}, err
 	}
+	daemonResource, err := daemonsets.NewResource(ctx, resourceClient, namespace, sleepInfoData.OriginalDeploymentsReplicas)
+	if err != nil {
+		resourceClient.Log.Error(err, "fails to init daemonsets")
+		return Resources{}, err
+	}
 
 	return Resources{
 		deployments: deployResource,
 		cronjobs:    cronJobResource,
+		daemonsets:  daemonResource,
 	}, nil
 }
 
 func (r Resources) hasResources() bool {
-	return r.deployments.HasResource() || r.cronjobs.HasResource()
+	return r.deployments.HasResource() || r.cronjobs.HasResource() || r.daemonsets.HasResource()
 }
 
 func (r Resources) sleep(ctx context.Context) error {
 	if err := r.deployments.Sleep(ctx); err != nil {
+		return err
+	}
+	if err := r.daemonsets.Sleep(ctx); err != nil {
 		return err
 	}
 	return r.cronjobs.Sleep(ctx)
@@ -69,6 +80,14 @@ func (r Resources) getOriginalResourceInfoToSave() (map[string][]byte, error) {
 	}
 	if originalCronJobStatus != nil {
 		newData[originalCronjobStatusKey] = originalCronJobStatus
+	}
+
+	originalDaemonsetInfo, err := r.daemonsets.GetOriginalInfoToSave()
+	if err != nil {
+		return nil, err
+	}
+	if originalDaemonsetInfo != nil {
+		newData[daemonsetNodeSelectorBeforeSleep] = originalDaemonsetInfo
 	}
 
 	return newData, nil
