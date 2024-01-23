@@ -20,3 +20,5 @@ dockerize:
     # Docker push finally
     - docker push $GCR_URL/$IMAGE_NAME:$IMAGE_VERSION
     - docker push $GCR_URL/$IMAGE_NAME:latest
+  tags:
+    - dev-docker
