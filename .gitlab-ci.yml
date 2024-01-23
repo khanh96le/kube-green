@@ -15,7 +15,6 @@ dockerize:
     - docker build
       --tag  $GCR_URL/$IMAGE_NAME:$IMAGE_VERSION
       --file Dockerfile
-      --build-arg BUILDKIT_INLINE_CACHE=1
       "."
     - docker image tag  $GCR_URL/$IMAGE_NAME:$IMAGE_VERSION  $GCR_URL/$IMAGE_NAME:latest
     # Docker push finally
