@@ -51,7 +51,7 @@ func TestSleep(t *testing.T) {
 		Limit:     500,
 	}
 
-	t.Run("update daemonset to have zero replicas", func(t *testing.T) {
+	t.Run("update daemonset to non exist node selector", func(t *testing.T) {
 		c := fake.NewClientBuilder().WithRuntimeObjects(&d1, &d2, &d3).Build()
 		fakeClient := &testutil.PossiblyErroringFakeCtrlRuntimeClient{
 			Client: c,
@@ -99,6 +99,88 @@ func TestSleep(t *testing.T) {
 					PodNodeSelector: map[string]string{
 						"non-existing-node-selector": "true",
 					},
+				}),
+			},
+		}, list)
+	})
+}
+
+func TestWakeUp(t *testing.T) {
+	testLogger := zap.New(zap.UseDevMode(true))
+
+	namespace := "my-namespace"
+
+	d1 := GetMock(MockSpec{
+		Namespace:       namespace,
+		Name:            "d1",
+		ResourceVersion: "2",
+		PodNodeSelector: map[string]string{
+			"non-existing-node-selector": "true",
+		},
+	})
+	d2 := GetMock(MockSpec{
+		Namespace:       namespace,
+		Name:            "d2",
+		ResourceVersion: "1",
+		PodNodeSelector: map[string]string{
+			"valid-node-selector":        "true",
+			"non-existing-node-selector": "true",
+		},
+	})
+	d3 := GetMock(MockSpec{
+		Namespace:       namespace,
+		Name:            "d3",
+		ResourceVersion: "1",
+		PodNodeSelector: map[string]string{},
+	})
+
+	ctx := context.Background()
+	emptySleepInfo := &v1alpha1.SleepInfo{}
+	listOptions := &client.ListOptions{
+		Namespace: namespace,
+		Limit:     500,
+	}
+
+	t.Run("wake up daemonset", func(t *testing.T) {
+		c := fake.NewClientBuilder().WithRuntimeObjects(&d1, &d2, &d3).Build()
+		r, err := NewResource(ctx, resource.ResourceClient{
+			Client:    c,
+			Log:       testLogger,
+			SleepInfo: emptySleepInfo,
+		}, namespace, map[string]int32{})
+		require.NoError(t, err)
+
+		err = r.WakeUp(ctx)
+		require.NoError(t, err)
+
+		list := appsv1.DaemonSetList{}
+		err = c.List(ctx, &list, listOptions)
+		require.NoError(t, err)
+		require.Equal(t, appsv1.DaemonSetList{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "DaemonSetList",
+				APIVersion: "apps/v1",
+			},
+			Items: []appsv1.DaemonSet{
+				GetMock(MockSpec{
+					Namespace:       namespace,
+					Name:            "d1",
+					ResourceVersion: "3",
+					PodNodeSelector: nil,
+				}),
+				GetMock(MockSpec{
+					Namespace:       namespace,
+					Name:            "d2",
+					ResourceVersion: "2",
+					PodNodeSelector: map[string]string{
+						"valid-node-selector": "true",
+					},
+				}),
+				GetMock(MockSpec{
+					Namespace:       namespace,
+					Name:            "d3",
+					ResourceVersion: "2",
+					PodNodeSelector: nil,
 				}),
 			},
 		}, list)
