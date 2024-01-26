@@ -60,6 +60,19 @@ func (d daemonsets) Sleep(ctx context.Context) error {
 }
 
 func (d daemonsets) WakeUp(ctx context.Context) error {
+	for _, daemonset := range d.data {
+		daemonset := daemonset
+
+		newDeploy := daemonset.DeepCopy()
+		if newDeploy.Spec.Template.Spec.NodeSelector != nil {
+			delete(newDeploy.Spec.Template.Spec.NodeSelector, "non-existing-node-selector")
+		}
+
+		if err := d.Patch(ctx, &daemonset, newDeploy); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
