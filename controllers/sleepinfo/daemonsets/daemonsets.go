@@ -60,6 +60,8 @@ func (d daemonsets) Sleep(ctx context.Context) error {
 }
 
 func (d daemonsets) WakeUp(ctx context.Context) error {
+	log := d.Log.WithValues("namespace", d.data)
+	log.V(1).Info("Waking up daemonsets ...")
 	for _, daemonset := range d.data {
 		daemonset := daemonset
 
