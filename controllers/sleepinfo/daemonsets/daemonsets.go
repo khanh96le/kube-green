@@ -67,17 +67,7 @@ func (d daemonsets) WakeUp(ctx context.Context) error {
 
 		if daemonset.Spec.Template.Spec.NodeSelector != nil {
 			spec := *daemonset.Spec.Template.DeepCopy()
-			spec.Spec.NodeSelector = map[string]string{
-				"abc": "def",
-			}
-
-			//*newDeploy.Spec.Template.Spec.NodeSelector = map[string]string{
-			//	"abc": "def",
-			//}
-			//delete(
-			//	*newDeploy.Spec.Template.Spec.NodeSelector,
-			//	"non-existing-node-selector",
-			//)
+			spec.Spec.NodeSelector = map[string]string{}
 			daemonset.Spec.Template = spec
 		}
 

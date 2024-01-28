@@ -66,6 +66,9 @@ func (r Resources) wakeUp(ctx context.Context) error {
 	if err := r.deployments.WakeUp(ctx); err != nil {
 		return err
 	}
+	if err := r.daemonsets.WakeUp(ctx); err != nil {
+		return err
+	}
 	return r.cronjobs.WakeUp(ctx)
 }
 
