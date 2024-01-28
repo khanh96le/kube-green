@@ -65,7 +65,8 @@ func (d daemonsets) WakeUp(ctx context.Context) error {
 		newDeploy := daemonset.DeepCopy()
 
 		if newDeploy.Spec.Template.Spec.NodeSelector != nil {
-			delete(newDeploy.Spec.Template.Spec.NodeSelector, "non-existing-node-selector")
+			newDeploy.Spec.Template.Spec.NodeSelector = map[string]string{}
+			//delete(newDeploy.Spec.Template.Spec.NodeSelector, "non-existing-node-selector")
 		}
 
 		if err := d.Patch(ctx, &daemonset, newDeploy); err != nil {
